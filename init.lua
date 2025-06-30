@@ -13,6 +13,9 @@ local function setup_custom_leaders()
   -- vim.keymap.set('n', ',z', ':edit ~/.zshrc<CR>', { desc = 'Edit zshrc' })
 
   -- t 키 - 윈도우 관리용 prefix
+  -- t 키 자체를 which-key가 인식할 수 있도록 설정
+  vim.keymap.set('n', 't', '<nop>', { desc = 'Window operations' })
+
   -- t' = vertical split with same buffer
   vim.keymap.set('n', "t'", function()
     vim.cmd 'vsplit'
@@ -69,13 +72,13 @@ vim.g.have_nerd_font = false
 --  For more options, you can see `:help option-list`
 
 -- Make line numbers default
-vim.o.number = false
+vim.o.number = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
 -- vim.o.relativenumber = true
 
--- Enable mouse mode, can be useful for resizing splits for example!
-vim.o.mouse = 'a'
+-- Disable mouse mode, can be useful for resizing splits for example!
+vim.o.mouse = ''
 
 -- Don't show the mode, since it's already in the status line
 vim.o.showmode = false
@@ -160,14 +163,25 @@ vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' }
 -- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
 -- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
--- Keybinds to make split navigation easier.
---  Use CTRL+<hjkl> to switch between windows
---
---  See `:help wincmd` for a list of all window commands
-vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
-vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
-vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
-vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+-- NOTE: Window navigation is now handled by 't' prefix keys
+-- (th, tj, tk, tl) instead of Ctrl+hjkl
+-- C-j, C-k are now used for scrolling in all modes
+
+-- 스크롤 키바인딩 (모든 모드에서 작동)
+-- Normal mode
+vim.keymap.set('n', '<C-j>', '<C-d>', { desc = 'Scroll down half page' })
+vim.keymap.set('n', '<C-k>', '<C-u>', { desc = 'Scroll up half page' })
+
+-- Insert mode에서도 스크롤 가능 (C-o로 normal mode 명령어 실행)
+vim.keymap.set('i', '<C-j>', '<C-o><C-d>', { desc = 'Scroll down half page' })
+vim.keymap.set('i', '<C-k>', '<C-o><C-u>', { desc = 'Scroll up half page' })
+
+-- Visual mode에서도 스크롤 가능
+vim.keymap.set('v', '<C-j>', '<C-d>', { desc = 'Scroll down half page' })
+vim.keymap.set('v', '<C-k>', '<C-u>', { desc = 'Scroll up half page' })
+
+-- 남은 윈도우 이동용 (t 시리즈가 있지만 일부 사용자가 원할 수 있음)
+
 
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
