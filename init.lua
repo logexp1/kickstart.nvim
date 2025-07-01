@@ -8,6 +8,18 @@ local function setup_custom_leaders()
     vim.cmd('edit ' .. vim.fn.stdpath 'config' .. '/init.lua')
   end, { desc = 'Edit init.lua' })
 
+  -- Messages 버퍼 (Emacs *Messages* 버퍼와 유사)
+  vim.keymap.set('n', ',m', function()
+    vim.cmd 'split'
+    vim.cmd 'enew'
+    vim.cmd 'setlocal buftype=nofile bufhidden=wipe noswapfile'
+    vim.cmd 'file Messages'
+    -- 메시지들을 버퍼에 삽입
+    local messages = vim.fn.execute 'messages'
+    vim.api.nvim_buf_set_lines(0, 0, -1, false, vim.split(messages, '\n'))
+    vim.cmd 'setlocal nomodifiable'
+  end, { desc = 'Open messages in new buffer' })
+
   -- 추가 즐겨찾기 파일들 (필요에 따라 추가)
   -- vim.keymap.set('n', ',v', ':edit ~/.vimrc<CR>', { desc = 'Edit vimrc' })
   -- vim.keymap.set('n', ',z', ':edit ~/.zshrc<CR>', { desc = 'Edit zshrc' })
@@ -27,7 +39,8 @@ local function setup_custom_leaders()
   end, { desc = 'Horizontal split (same buffer)' })
 
   -- 추가 윈도우 관리 기능들
-  vim.keymap.set('n', 'tq', '<C-w>q', { desc = 'Quit window' })
+  vim.keymap.set('n', 'tq', ':enew<CR>', { desc = 'Close buffer (keep window)' })
+  vim.keymap.set('n', 'td', ':bdelete<CR>', { desc = 'Delete buffer' })
   vim.keymap.set('n', 'to', '<C-w>o', { desc = 'Only this window' })
   vim.keymap.set('n', 'th', '<C-w>h', { desc = 'Move to left window' })
   vim.keymap.set('n', 'tj', '<C-w>j', { desc = 'Move to bottom window' })
@@ -139,6 +152,9 @@ vim.o.scrolloff = 10
 -- See `:help 'confirm'`
 vim.o.confirm = true
 
+-- 커서 라인 전체 하이라이트 없애기
+vim.o.cursorline = false
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -180,21 +196,7 @@ vim.keymap.set('i', '<C-k>', '<C-o><C-u>', { desc = 'Scroll up half page' })
 vim.keymap.set('v', '<C-j>', '<C-d>', { desc = 'Scroll down half page' })
 vim.keymap.set('v', '<C-k>', '<C-u>', { desc = 'Scroll up half page' })
 
--- 남은 윈도우 이동용 (t 시리즈가 있지만 일부 사용자가 원할 수 있음)
-
-
--- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
--- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
--- vim.keymap.set("n", "<C-S-l>", "<C-w>L", { desc = "Move window to the right" })
--- vim.keymap.set("n", "<C-S-j>", "<C-w>J", { desc = "Move window to the lower" })
--- vim.keymap.set("n", "<C-S-k>", "<C-w>K", { desc = "Move window to the upper" })
-
--- [[ Basic Autocommands ]]
---  See `:help lua-guide-autocommands`
-
--- Highlight when yanking (copying) text
---  Try it with `yap` in normal mode
---  See `:help vim.hl.on_yank()`
+-- yank 한 region 하이라이트
 vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking (copying) text',
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
@@ -430,7 +432,7 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
 
       -- Slightly advanced example of overriding default behavior and theme
-      vim.keymap.set('n', '<leader>/', function()
+      vim.keymap.set('n', '/', function()
         -- You can pass additional configuration to Telescope to change the theme, layout, etc.
         builtin.current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
           winblend = 10,
