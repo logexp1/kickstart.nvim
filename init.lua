@@ -47,6 +47,66 @@ local function setup_custom_leaders()
   vim.keymap.set('n', 'tk', '<C-w>k', { desc = 'Move to top window' })
   vim.keymap.set('n', 'tl', '<C-w>l', { desc = 'Move to right window' })
 
+  -- Comment 기능 - tc 키바인딩 (매크로 친화적)
+  vim.keymap.set('n', 'tc', function()
+    if vim.fn.reg_recording() ~= '' then
+      -- 매크로 recording 중일 때는 직접 API 호출 (안전함)
+      vim.schedule(function()
+        require('Comment.api').toggle.linewise.current()
+      end)
+    else
+      -- 일반 상황에서는 바로 API 사용
+      require('Comment.api').toggle.linewise.current()
+    end
+  end, { desc = 'Toggle comment line (macro-safe)' })
+
+  vim.keymap.set('v', 'tc', function()
+    if vim.fn.reg_recording() ~= '' then
+      -- 매크로 recording 중일 때는 직접 API 호출
+      vim.schedule(function()
+        local mode = vim.fn.visualmode()
+        local esc = vim.api.nvim_replace_termcodes('<ESC>', true, false, true)
+        vim.api.nvim_feedkeys(esc, 'nx', false)
+        require('Comment.api').toggle.linewise(mode)
+      end)
+    else
+      -- 일반 상황에서는 기존 방식
+      local esc = vim.api.nvim_replace_termcodes('<ESC>', true, false, true)
+      vim.api.nvim_feedkeys(esc, 'nx', false)
+      require('Comment.api').toggle.linewise(vim.fn.visualmode())
+    end
+  end, { desc = 'Toggle comment selection (macro-safe)' })
+
+  -- Macro 설정 - q register만 사용
+  -- q 키를 recording 상태에 따라 동작하도록 설정
+  vim.keymap.set('n', 'q', function()
+    if vim.fn.reg_recording() == '' then
+      -- 현재 recording 중이 아니면 아무것도 하지 않음 (qq로 시작해야 함)
+      vim.notify('Use qq to start macro recording', vim.log.levels.INFO)
+    else
+      -- 현재 recording 중이면 stop
+      vim.cmd 'normal! q'
+      vim.notify('Macro recording stopped', vim.log.levels.INFO)
+    end
+  end, { desc = 'Stop macro recording (or show info)' })
+
+  vim.keymap.set('n', 'qq', function()
+    if vim.fn.reg_recording() == '' then
+      -- 현재 recording 중이 아니면 q register로 recording 시작
+      vim.cmd 'normal! qq'
+      vim.notify('Macro recording started (q register)', vim.log.levels.INFO)
+    else
+      -- 현재 recording 중이면 stop
+      vim.cmd 'normal! q'
+      vim.notify('Macro recording stopped', vim.log.levels.INFO)
+    end
+  end, { desc = 'Start/stop macro recording (q register only)' })
+
+  -- macro 실행 - Q가 다른 기능에 덮어씌워질 수 있으니 더 안전한 키 사용
+  vim.keymap.set('n', '<leader>q', '@q', { desc = 'Execute macro from q register' })
+  -- 또는 qe (q execute)로도 실행 가능
+  vim.keymap.set('n', 'qe', '@q', { desc = 'Execute macro from q register' })
+
   -- 기존 Space 기반 리더키들
   -- 버퍼 관리용 prefix: <leader>b
   vim.keymap.set('n', '<leader>b', '<nop>', { desc = 'Buffer operations' })
@@ -65,6 +125,10 @@ local function setup_custom_leaders()
   -- a와 A 바꾸기 (라인 끝 이동을 더 쉽게)
   vim.keymap.set('n', 'a', 'A', { desc = 'Insert at end of line' })
   vim.keymap.set('n', 'A', 'a', { desc = 'Insert after cursor' })
+
+  -- Undo/Redo 키바인딩
+  vim.keymap.set('n', 'u', 'u', { desc = 'Undo' })
+  vim.keymap.set('n', 'U', '<C-r>', { desc = 'Redo' })
 end
 
 -- 커스텀 리더키들 설정
@@ -234,6 +298,20 @@ rtp:prepend(lazypath)
 require('lazy').setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'NMAC427/guess-indent.nvim', -- Detect tabstop and shiftwidth automatically
+
+  -- Comment plugin for easy commenting
+  {
+    'numToStr/Comment.nvim',
+    config = function()
+      require('Comment').setup {
+        -- 기본 키바인딩 활성화 (매크로에서 사용)
+        mappings = {
+          basic = true, -- gcc, gbc 등 기본 매핑 활성화
+          extra = false, -- 추가 매핑은 비활성화
+        },
+      }
+    end,
+  },
 
   -- NOTE: Plugins can also be added by using a table,
   -- with the first argument being the link and the following
